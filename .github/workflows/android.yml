@@ -1,26 +1,35 @@
-name: Android CI
+name: Build with Gradle Wrapper Jar
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ main, master ]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: set up JDK 11
-      uses: actions/setup-java@v4
-      with:
-        java-version: '11'
-        distribution: 'temurin'
-        cache: gradle
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'          # 根据 gradle-wrapper.properties 调整
+          cache: 'gradle'             # 基础缓存，可被下一步增强
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        # 不需要 with: gradle-version，因为项目自带 wrapper jar
+
+      - name: Build via Wrapper Jar
+        run: java -jar gradle/wrapper/gradle-wrapper.jar build --no-daemon
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: build/libs/*.jar      # 按项目实际产物路径修改
